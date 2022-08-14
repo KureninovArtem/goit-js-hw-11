@@ -1,5 +1,7 @@
 import axios from 'axios';
 import Notiflix from 'notiflix';
+import "simplelightbox/dist/simple-lightbox.min.css";
+import SimpleLightbox from "simplelightbox";
 
 const refs = {
     form: document.querySelector(".search-form"),
@@ -33,6 +35,7 @@ const getImages = async (event) => {
         if (response.data.hits.length === 0) {
             Notiflix.Notify.failure("Sorry, there are no images matching your search query. Please try again.");
             updateUi();
+            refs.loadMoreBtn.classList.add("hide");
             return;
         }
 
@@ -52,9 +55,16 @@ const getImages = async (event) => {
             page += 1;
         }
 
-        console.log(response.data);
-        console.log(event.type);
-        console.log(page);
+        if (event.type === "click") {
+            const { height: cardHeight } = document
+            .querySelector(".gallery")
+            .firstElementChild.getBoundingClientRect();
+
+            window.scrollBy({
+            top: cardHeight * 2,
+            behavior: "smooth",
+            });
+        }
     } catch (error) {
         console.log(error);
     }
@@ -64,7 +74,9 @@ refs.form.addEventListener("submit", getImages);
 refs.loadMoreBtn.addEventListener("click", getImages);
 
 const createListItem = (item) => `<div class="photo-card">
-    <img src="${item.webformatURL}" alt="${item.tags}" loading="lazy" />
+    <a class="photo-card-item" href="${item.largeImageURL}">
+    <img class="photo-card-image" src="${item.webformatURL}" alt="${item.tags}" loading="lazy" />
+    <a/>
         <div class="info">
         ${item.likes ? `<p class="info-item">
             <b>Likes ${item.likes}</b>
@@ -86,4 +98,12 @@ const generateContent = (array) => (array ? array.reduce((acc, item) => acc + cr
 const insertContent = (array) => {
     const result = generateContent(array);
     refs.gallery.insertAdjacentHTML("beforeend", result);
+
+    let gallery = new SimpleLightbox(".photo-card-item", {
+    captionsData: "alt",
+    captionDelay: 250,
+    captionPosition: "bottom",
+    });
+    
+    gallery.refresh();
 };
